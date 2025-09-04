@@ -4,16 +4,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 /*
  * Referências:
  *  - https://www.geeksforgeeks.org/java/producer-consumer-solution-using-threads-java/
- * 
  * Trechos de código gerados por IA (Deepseek V3.1) 
- * 
  */
 
 public class Teste2
 {
     private static final int NUM_PRODUCERS=6,
-                             NUM_CONSUMERS=6,
-                             BUFFER_CAPACITY=20;
+                             NUM_CONSUMERS=3,
+                             BUFFER_CAPACITY=6;
 
     public static void main(String[] args) throws InterruptedException{
         final PC pc = new PC(BUFFER_CAPACITY);
@@ -98,7 +96,6 @@ public class Teste2
                 synchronized(this){
                     while(buffer.size() == capacity){
                         System.out.println("Produtor " + producerID + " em espera - Buffer cheio (" + buffer.size() + "/" + capacity + ")");
-                        wait();
                         if (Thread.currentThread().isInterrupted()) return;
                     }
                     int value = counter.getAndIncrement();
@@ -115,7 +112,6 @@ public class Teste2
                 synchronized(this){
                     while(buffer.isEmpty()){
                         System.out.println("Consumidor "+consumerID+" em espera - Buffer vazio");
-                        wait();
                         if (Thread.currentThread().isInterrupted()) return;
                     }
 
