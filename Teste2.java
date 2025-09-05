@@ -11,7 +11,7 @@ public class Teste2
 {
     private static final int NUM_PRODUCERS=6,
                              NUM_CONSUMERS=3,
-                             BUFFER_CAPACITY=6;
+                             BUFFER_CAPACITY=1;
 
     public static void main(String[] args) throws InterruptedException{
         final PC pc = new PC(BUFFER_CAPACITY);
@@ -27,6 +27,7 @@ public class Teste2
         
         for(int i=0; i<NUM_PRODUCERS; i++){
             final int producerId = i;
+            // inicializa a Thread i implementando a interface Runnable por meio de expressão lambda
             producers[i] = new Thread(()->{
                 try{
                     pc.produce(producerId);
@@ -39,6 +40,7 @@ public class Teste2
 
         for(int i=0; i<NUM_CONSUMERS; i++){
             final int consumerId = i;
+            // inicializa a Thread i implementando a interface Runnable por meio de expressão lambda
             consumers[i] = new Thread(()->{
                 try{
                     pc.consume(consumerId);
@@ -50,14 +52,19 @@ public class Teste2
         }
 
         Thread.sleep(5000);
+        
 
-        for (Thread producer : producers) {
-            producer.interrupt();
+        synchronized(pc){
+            for (Thread producer : producers) {
+                producer.interrupt();
+            }
+            for (Thread consumer : consumers) {
+                consumer.interrupt();
+            }
+            pc.notifyAll();   
         }
-        for (Thread consumer : consumers) {
-            consumer.interrupt();
-        }   
 
+        //Espera a thread terminar
         for (Thread producer : producers) {
             producer.join();
         }
@@ -84,7 +91,7 @@ public class Teste2
         private final int capacity;
 
         //Contador thread-safe
-        private final AtomicInteger counter = new AtomicInteger(0);
+        private final AtomicInteger counter = new AtomicInteger(1);
     
         public PC(int capacity)
         {
@@ -96,6 +103,7 @@ public class Teste2
                 synchronized(this){
                     while(buffer.size() == capacity){
                         System.out.println("Produtor " + producerID + " em espera - Buffer cheio (" + buffer.size() + "/" + capacity + ")");
+                        wait();
                         if (Thread.currentThread().isInterrupted()) return;
                     }
                     int value = counter.getAndIncrement();
@@ -104,7 +112,7 @@ public class Teste2
                     notifyAll();
                 }
             }
-            Thread.sleep(100+(int)(Math.random()*4));
+            Thread.sleep(100+(int)(Math.random()*400));
         }
 
         public void consume(int consumerID) throws InterruptedException
@@ -112,6 +120,7 @@ public class Teste2
                 synchronized(this){
                     while(buffer.isEmpty()){
                         System.out.println("Consumidor "+consumerID+" em espera - Buffer vazio");
+                        wait();
                         if (Thread.currentThread().isInterrupted()) return;
                     }
 
